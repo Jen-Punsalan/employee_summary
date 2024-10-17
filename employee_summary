@@ -1,0 +1,86 @@
+django-admin startproject employee_summary
+cd employee_summary
+python manage.py startapp employees
+
+employees/models.py, define an Employee model:
+
+from django.db import models
+
+class Employee(models.Model):
+    name = models.CharField(max_length=100)
+    position = models.CharField(max_length=100)
+    department = models.CharField(max_length=100)
+    online = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.name} - {self.position} ({'Online' if self.online else 'Offline'})"
+
+employees/admin.py :
+
+from django.contrib import admin
+from .models import Employee
+
+admin.site.register(Employee)
+
+employees/views.py: 
+
+from django.shortcuts import render
+from .models import Employee
+
+def employee_summary(request):
+    employees = Employee.objects.all()
+    return render(request, 'employees/employee_summary.html', {'employees': employees})
+
+employees/urls.py :
+
+from django.urls import path
+from .views import employee_summary
+
+urlpatterns = [
+    path('', employee_summary, name='employee_summary'),
+]
+
+urls.py :
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('employees/', include('employees.urls')),
+]
+
+employees/templates/employees/employee_summary.html:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Summary</title>
+</head>
+<body>
+    <h1>Employee Summary</h1>
+    <table border="1">
+        <tr>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Department</th>
+            <th>Status</th>
+        </tr>
+        {% for employee in employees %}
+        <tr>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.position }}</td>
+            <td>{{ employee.department }}</td>
+            <td>{{ "Online" if employee.online else "Offline" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
